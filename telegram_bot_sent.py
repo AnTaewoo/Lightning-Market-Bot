@@ -42,7 +42,8 @@ def send(params):
 def send_announcement(data, chatId):
     title = data[0]
     predict_earn = round(data[5] - data[1], 2)
-    description = f"\n\n가격: {data[1]:,}원\n평균가격: {data[5]:.2f}원\n\n예상 수익: {check_price(predict_earn)}\n\n위치: {data[3]}\n게시글 날짜: {data[2]}\n링크: {URL+data[4]}"
+    link = data[6].replace(" ", "")
+    description = f"\n\n가격: {data[1]:,}원\n평균가격: {data[5]:.2f}원\n\n예상 수익: {check_price(predict_earn)}\n\n위치: {data[3]}\n게시글 날짜: {data[2]}\n링크: {URL+data[4]}\n\n비교링크: {link}"
 
     message = f"{title}\n{description}"
 

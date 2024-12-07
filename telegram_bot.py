@@ -25,10 +25,10 @@ def read_text_file(filename):
 
 # 리스트에 저장
 stopwordsList = read_text_file(
-    "/Users/antaewoo/Desktop/Project/Lightning-Market-Bot/stopwords.txt"
+    "./stopwords.txt"
 )
 preservedList = read_text_file(
-    "/Users/antaewoo/Desktop/Project/Lightning-Market-Bot/preserved.txt"
+    "./preserved.txt"
 )
 
 
@@ -67,13 +67,20 @@ def crawl_and_telegram_alert(data_list):
 
     # Selenium 설정
     options = Options()
-    options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--disable-software-rasterizer")
+    options.add_argument("--headless")  # Headless 모드
+    options.add_argument("--disable-application-cache")  # 캐시 비활성화
     service = Service(
-        executable_path="/Users/antaewoo/Desktop/Project/Lightning-Market-Bot/chromedriver-mac-arm64/chromedriver"
+        executable_path="./chromedriver-linux64/chromedriver"
     )  # chromedriver 경로
     driver = webdriver.Chrome(service=service, options=options)
+    # 브라우저 쿠키 삭제
+    driver.delete_all_cookies()
+
+    # 특정 캐시 파일이나 저장소를 삭제하려면 DevTools 프로토콜 사용 가능
     driver.refresh()
     time.sleep(3)
 
@@ -82,14 +89,18 @@ def crawl_and_telegram_alert(data_list):
 
     result_list = []
     for data in data_list:
+        if data[1] < 100000:
+            continue
+
         keywordStr = export_import_word(data[0])
-        driver.get(URL + keywordStr)
+        searchURL = URL + keywordStr
+        driver.get(searchURL)
 
         html_content = driver.page_source
 
         # BeautifulSoup으로 HTML 파싱
         soup = BeautifulSoup(html_content, "html.parser")
-        div_data = soup.find_all("div", class_="sc-kcDeIU WTgwo")
+        div_data = soup.find_all("div", class_="sc-BngTV fuvCPB")
         # 크롤링 결과 저장할 리스트
 
         # 각 div 태그 내의 데이터를 추출
@@ -107,18 +118,18 @@ def crawl_and_telegram_alert(data_list):
                     .replace(",", "")
                 )
 
-                if value > 5000000:
+                if value > data[1] + 500000:
                     continue
 
                 search_data.append(value)
 
         if not search_data:
-            result = list(data) + [-1]
+            result = list(data) + [-1] + [searchURL]
 
             result_list.append(result)
         else:
-            if (sum(search_data) / len(search_data)) - data[1] > 0:
-                result = list(data) + [sum(search_data) / len(search_data)]
+            if (sum(search_data) / len(search_data)) - data[1] > 30000:
+                result = list(data) + [sum(search_data) / len(search_data)] + [searchURL]
 
                 result_list.append(result)
 

@@ -22,13 +22,26 @@ from bs4 import BeautifulSoup
 def crawl_and_store():
     # Selenium 설정
     options = Options()
-    options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--disable-software-rasterizer")
+    options.add_argument("--headless")  # Headless 모드
+    options.add_argument("--disable-application-cache")  # 캐시 비활성화
+    options.add_argument("--disable-dev-shm-usage")         # GPU 사용 안 함
+    options.add_argument("--disk-cache-size=0")
+    options.add_argument("--incognito")
     service = Service(
-        executable_path="/Users/antaewoo/Desktop/Project/Lightning-Market-Bot/chromedriver-mac-arm64/chromedriver"
+        executable_path="./chromedriver-linux64/chromedriver",
+        service_log_path='./local/share/selenium/logfile.log'
     )  # chromedriver 경로
+    options.add_argument("--user-data-dir=/tmp/selenium_profile")
     driver = webdriver.Chrome(service=service, options=options)
+    # 브라우저 쿠키 삭제
+    driver.delete_all_cookies()
+    driver.execute_cdp_cmd("Network.clearBrowserCache", {})
+
+    # 특정 캐시 파일이나 저장소를 삭제하려면 DevTools 프로토콜 사용 가능
     driver.refresh()
     time.sleep(3)
 
@@ -39,7 +52,7 @@ def crawl_and_store():
 
     # BeautifulSoup으로 HTML 파싱
     soup = BeautifulSoup(html_content, "html.parser")
-    data = soup.find_all("div", class_="sc-kcDeIU WTgwo")
+    data = soup.find_all("div", class_="sc-BngTV fuvCPB")
     # 크롤링 결과 저장할 리스트
     result_list = []
 
@@ -142,7 +155,7 @@ def crawl_and_store():
 
             # telegram_bot 으로 전송
             telegram_list.append(data)
-
+            
     crawl_and_telegram_alert(telegram_list)
 
     # 커밋 및 종료
@@ -150,9 +163,9 @@ def crawl_and_store():
     cursor.close()
     connection.close()
 
-    print("Complete And Wait 5 min...")
+    print("Complete And Wait 2 min...")
 
 
 while True:
     crawl_and_store()
-    time.sleep(300)  # 5분 (300초) 대기
+    time.sleep(120)  # 5분 (300초) 대기
